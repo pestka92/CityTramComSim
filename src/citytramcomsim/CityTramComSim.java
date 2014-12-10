@@ -46,5 +46,15 @@ public class CityTramComSim
         //
         map.wypiszMape();
         //
+
+         EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				// java.util.Properties systemProperties = System.getProperties();
+		        // systemProperties.setProperty("http.proxyHost", "localhost");
+		        // systemProperties.setProperty("http.proxyPort", "8008");
+		        new MapViewer().setVisible(true);
+			}
+		});
     }
 }
