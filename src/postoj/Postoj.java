@@ -11,9 +11,10 @@ package postoj;
  * @author jaoles
  */
 
+import parser.Node;
 import exceptions.*;
 
-public class Postoj
+public class Postoj extends Node
 {   
     
     private int numer = -1; //numer postoju (swiatla = -1, przystanki <0;niesk.+>)

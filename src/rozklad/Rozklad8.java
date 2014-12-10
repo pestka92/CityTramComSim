@@ -22,7 +22,7 @@ public class Rozklad8
         {
             System.out.print("(int []) _start_time == null");
         }
-        if( (_start_przystanek == 0) && (Time.compareTime(_start_time, Utils.stringToIntArray("81208"))) )
+        if( (_start_przystanek == 0) && (Time.equalTime(_start_time, Utils.stringToIntArray("81208"))) )
         {
             Time [] rozklad = _tram.getRozklad();
             

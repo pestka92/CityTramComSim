@@ -24,6 +24,11 @@ import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
 
+import parser.Node;
+import parser.Parser;
+import parser.Track;
+import postoj.Przystanek;
+
 public class MapViewer extends JFrame implements JMapViewerEventListener {
 	private static final long serialVersionUID = 1L;
     private JMapViewerTree treeMap = null;
@@ -39,7 +44,7 @@ public class MapViewer extends JFrame implements JMapViewerEventListener {
 		super("Symulacja Krakowskiej Sieci Tramwajowej");
 		setVisible(true);
 		JMapViewer map = new JMapViewer(); 
-		
+		Parser p=new Parser("tram_lines.osm");
         treeMap = new JMapViewerTree("Zones");
         
         // Listen to the map viewer for user operations so components will
@@ -69,10 +74,10 @@ public class MapViewer extends JFrame implements JMapViewerEventListener {
         panel.setLayout(new BorderLayout());
         panel.add(panelTop, BorderLayout.NORTH);
         panel.add(panelBottom, BorderLayout.SOUTH);
-        JLabel helpLabel = new JLabel("U¿yj prawego przycisku myszki by siê poruszaæ,\n "
-                + "podwójnego klikniêcia lewym przyciskiem lub kó³ka by przybli¿yæ/oddaliæ.");
+        JLabel helpLabel = new JLabel("Uï¿½yj prawego przycisku myszki by siï¿½ poruszaï¿½,\n "
+                + "podwï¿½jnego klikniï¿½cia lewym przyciskiem lub kï¿½ka by przybliï¿½yï¿½/oddaliï¿½.");
         helpPanel.add(helpLabel);
-        JButton button = new JButton("dopasuj podgl¹d do znaczników");
+        JButton button = new JButton("dopasuj podglï¿½d do znacznikï¿½w");
         button.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
@@ -98,7 +103,7 @@ public class MapViewer extends JFrame implements JMapViewerEventListener {
         });
         panelBottom.add(showTreeLayers);
         ///
-        final JCheckBox showToolTip = new JCheckBox("Wspó³rzêdne");
+        final JCheckBox showToolTip = new JCheckBox("Wspï¿½rzï¿½dne");
         showToolTip.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 map().setToolTipText(null);
@@ -135,22 +140,23 @@ public class MapViewer extends JFrame implements JMapViewerEventListener {
         add(treeMap, BorderLayout.CENTER);
 
         // jakies przykladowe punkty ------NIEMCY W KRAKOWIE XD wtf ---------
-        LayerGroup germanyGroup = new LayerGroup("Germany");
-        Layer germanyWestLayer = germanyGroup.addLayer("Germany West");
-        Layer germanyEastLayer = germanyGroup.addLayer("Germany East");
-        MapMarkerDot eberstadt = new MapMarkerDot(germanyEastLayer, "Eberstadt", 50.0467657,20.0048731);
-        MapMarkerDot ebersheim = new MapMarkerDot(germanyWestLayer, "Ebersheim", 50.1,20.0048731);
-        MapMarkerDot empty = new MapMarkerDot(germanyEastLayer, 50.1,20.0048731);
-        MapMarkerDot darmstadt = new MapMarkerDot(germanyEastLayer, "Darmstadt", 50.1,19.9348731);
-        map().addMapMarker(eberstadt);
-        map().addMapMarker(ebersheim);
-        map().addMapMarker(empty);
-        Layer franceLayer = treeMap.addLayer("France");
-        map().addMapMarker(new MapMarkerDot(franceLayer, "La Gallerie", 50.0467657,20.1048731));
-        map().addMapMarker(darmstadt);
-        treeMap.addLayer(germanyWestLayer);
-        treeMap.addLayer(germanyEastLayer);
+        LayerGroup cracowGroup = new LayerGroup("Cracow");
+        Layer cracowWestLayer = cracowGroup.addLayer("Cracow West");
+        Layer cracowEastLayer = cracowGroup.addLayer("Cracow East");
+        Layer cracowNorthLayer = cracowGroup.addLayer("Cracow North");
+        Layer cracowSouthLayer =cracowGroup.addLayer("Cracow South");
+        
+        //Track t=p.trackRegistry.values().toArray(new Track[0])[7];
+        for(Node n:p.nodeRegistry.values()){
+        	if(n instanceof Przystanek)
+        		map().addMapMarker(new MapMarkerDot(cracowEastLayer, ((Przystanek) n).getNazwa(), n.lonlat[1],n.lonlat[0]));
+        }
 
+        
+        treeMap.addLayer(cracowWestLayer);
+        treeMap.addLayer(cracowEastLayer);
+        treeMap.addLayer(cracowNorthLayer);
+        treeMap.addLayer(cracowSouthLayer);
         //map.setDisplayPosition(new Coordinate(50.0467657,20.0048731), 14);
         // map.setTileGridVisible(true);
        
@@ -177,7 +183,7 @@ public class MapViewer extends JFrame implements JMapViewerEventListener {
                 if(showToolTip.isSelected()) map().setToolTipText(map().getPosition(p).toString());
             }
         });
-        map().setDisplayToFitMapMarkers(); // NO DZIA£AJ ¯ESZ!!!!! :<
+        map().setDisplayToFitMapMarkers(); // NO DZIAï¿½AJ ï¿½ESZ!!!!! :<
         
     }
     private JMapViewer map(){

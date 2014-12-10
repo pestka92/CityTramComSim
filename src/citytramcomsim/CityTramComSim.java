@@ -10,11 +10,16 @@ package citytramcomsim;
  *
  * @author jaoles
  */
-import exceptions.InproperTableIndexException;
-import map.*;
+import gui.MapViewer;
+
+import java.awt.EventQueue;
+import java.sql.Time;
+
+import com.sun.org.apache.xml.internal.serializer.utils.Utils;
+
 import tram.Tram;
-import utils.Time;
-import utils.Utils;
+
+import map.Map;
 
 public class CityTramComSim 
 {
@@ -28,8 +33,8 @@ public class CityTramComSim
         int dlugosc_mapy = map.ilPostojow;
         
         //Tram(numer, start_przystanek, (int[]) start_time)
-        /*
-        Tram t8 = new Tram(8, 0, utils.Utils.stringToIntArray("81208"));
+        
+        /*Tram t8 = new Tram(8, 0, utils.Utils.stringToIntArray("81208"));
         System.out.println("Ilosc przystankow dla tramwaju \"t8\": "+t8.getIlPrzystankow());
         Time present_time = new Time(utils.Utils.stringToIntArray("11207"));
         for(int i=0; i<46; i++)
@@ -40,14 +45,14 @@ public class CityTramComSim
             
             t8.movesTram(present_time);
             present_time.incrementTime();
-        }
-        */
+        }*/
+        
         
         //
-        map.wypiszMape();
+        //map.wypiszMape();
         //
-
-         EventQueue.invokeLater(new Runnable() {
+        
+        EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
 				// java.util.Properties systemProperties = System.getProperties();
@@ -56,5 +61,6 @@ public class CityTramComSim
 		        new MapViewer().setVisible(true);
 			}
 		});
+    
     }
 }

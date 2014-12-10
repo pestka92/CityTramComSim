@@ -6,6 +6,8 @@
 
 package tram;
 
+import static globals.Globals.map;
+import postoj.*;
 import static rozklad.Rozklad8.setRozklad8;
 import utils.Time;
 
@@ -28,8 +30,10 @@ public class Tram
     
     private int current_stop = -1; //obecny przystanek - numer komorki (route,rozklad) w ktorej znajduje sie (numer przystanku, czas przyjazdu na przystanek)
     private int current_index = -1; //obecny index (do route, rozklad itp)
-    private double max_accel = 0.001; //km/s^2 maksymalne przyspieszenie
-        
+    private double max_accel = 0.001; //km/s^2 maksymalne przyspieszenie 
+    //[??]przerobic na m/min
+    private double max_deaccel = 0.1; //[??]sprawdzic
+            
     public Tram(int _numer, int _start_przystanek, int [] _start_time)
     {
         setRoute(_numer, _start_przystanek); //il_przystankow, route, start_przystanek, finish_przystanek
@@ -102,59 +106,120 @@ public class Tram
     public int [] getRoute() { return route; }
     
     public void setCurrentStop(int _current_stop) { current_stop = _current_stop; }
-    public int getCurrentStop() 
+    public int getCurrentStop() { return current_stop; }
+    
+    /*
+    public int getNumerCurrentPrzystanek()
     {
         if(route == null) return -1;
-        return route[current_stop]; 
+        return route[current_index]; 
+    }*/
+    
+    public void setCurrentIndex(int _current_index) { current_index = _current_index; }
+    public int getCurrentIndex() 
+    {
+        return current_index;
     }
     
     public double getMaxAccel() { return max_accel; }
     
     public void reverseRoute() { utils.Utils.reverseIntArray(route); }
     
+    public boolean sprawdzCzyWolnyPrzystanek(int _numer_przystanku)
+    {
+        
+        if( map.getPrzystanek(_numer_przystanku) != null ) return true;
+        else return false;
+    }
+    
+    public void zajmijPrzystanek(int _numer_przystanku)
+    {
+        map.getPrzystanek(_numer_przystanku).zajmijPostoj();
+    }
+    
+    public void zajmijPostoj(int _numer_postoju)
+    {
+        map.getPostoj(_numer_postoju).zajmijPostoj();
+    }
+    
+    //poruszanie jest napisane z zalozeniem, ze jest to w petli reprezentujacej uplyw czasu
     public void firstMoveTram(Time present_time)
     {
-        if( (current_stop == -1) && (Time.compareTime(present_time.getTime(), getStartTime().getTime())) )
-        {            
-            current_stop = getStartPrzystanek();
-            current_index = 0;
-            
-            System.out.println("W firstMoveTram");  //
-            System.out.println("current_stop: "+current_stop);
-            System.out.println("current_index: "+current_index);
-            System.out.println();
-            
+        if( (current_stop == -1) && (Time.equalTime(present_time.getTime(), getStartTime().getTime())) )
+        {   
+            if( sprawdzCzyWolnyPrzystanek(getStartPrzystanek()) )
+            {
+                zajmijPrzystanek(getStartPrzystanek());
+                setCurrentStop(getStartPrzystanek());
+                setCurrentIndex(0);
+                    System.out.println("W firstMoveTram");
+                    System.out.println("current_stop: "+current_stop);
+                    System.out.println("current_index: "+current_index);
+                    System.out.println();
+            }
         }
     }
     
-    public void moveTram(Time present_time) //brak porownywania czasu
+    public int getNumerNextPostoj(int _numer_current_postoju)
+    {
+        if( map.getPostoj(_numer_current_postoju) instanceof Przystanek )
+        { return getNumerOdpowiedniejOdnogi(); }
+        
+        return _numer_current_postoju+1;
+    }
+    
+    
+    public int getNumerOdpowiedniejOdnogi() //tu moze byc blad
+    {
+        int next_postoj = -1;
+        int next_przystanek = route[current_index+1];
+        int numer_odnogi = -1;
+        int numer_testowanego_next_stopu = -1;
+        for(int i=0; i<map.getPrzystanek(current_stop).getIlOdnog(); i++)
+        {
+            numer_odnogi = map.getPrzystanek(current_stop).getOdnogi()[i];
+            numer_testowanego_next_stopu = numer_odnogi;
+            
+            while(!(map.getPostoj(numer_odnogi) instanceof Przystanek))
+            { numer_odnogi++; }
+            
+            if( (map.getPostoj(numer_odnogi) instanceof Przystanek) 
+            && (map.getPostoj(numer_odnogi).getNumer() == next_przystanek ) )
+            { next_postoj = numer_odnogi; }
+        }
+        
+        return next_postoj;
+    }
+    
+    public void moveTram(Time present_time) //moveMiedzyPrzystankami - do ogarniecia
     {
         if( (current_stop > -1) && (current_stop < finish_przystanek-1) )
-        {
-            current_index++;
-            
-            int [] czas_dojazdu = getSingleRozklad(current_index).getTime();
-            
-            if(Time.compareTime(present_time.getTime(), getSingleRozklad(current_index).getTime()))
+        {            
+            if(Time.earlierTime(present_time.getTime(), getSingleRozklad(current_index+1).getTime()))
             {
-                current_stop = getRoute()[current_index];
-                
-                System.out.println("W moveTram");
-                System.out.println("current_stop: "+current_stop);
-                System.out.println("current_index: "+current_index);
-                System.out.println();
-                current_index++;
+                int current_postoj = map.getNumerPostoju(current_stop);
+                int next_postoj = map.getPostoj( getNumerNextPostoj(current_postoj) ).getNumer();
+                if( sprawdzCzyWolnyPrzystanek(next_postoj) )
+                {
+                    zajmijPostoj(next_postoj);
+                    //zwolnijPostoj(current_stop);
+                    current_index++;
+                        System.out.println("W moveTram");
+                        System.out.println("current_stop: "+current_stop);
+                        System.out.println("current_index: "+current_index);
+                        System.out.println();
+                    
+                }
             }
-            current_index--;
         }
     }
     
-    public void finishMoveTram(Time present_time) //brak porownywania czasu
+    public void finishMoveTram(Time present_time) //do przerobienia
     {
         if( current_index == (il_przystankow-2) )
         {
             current_index++;
-            if(Time.compareTime(present_time.getTime(), getSingleRozklad(current_index).getTime()))
+            if(Time.equalTime(present_time.getTime(), getSingleRozklad(current_index).getTime()))
             {
                 current_stop = getRoute()[current_index];
                 System.out.println("W finishMoveTram");

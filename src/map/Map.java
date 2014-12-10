@@ -13,6 +13,10 @@ package map;
 
 import exceptions.InproperTableIndexException;
 import java.util.ArrayList;
+
+import parser.Node;
+import parser.Parser;
+import parser.Track;
 import postoj.*;
 
 public class Map
@@ -22,43 +26,38 @@ public class Map
     //public int [] [] numeracja = new int[2][]; //nie potrzebny, bo mamy w klasie Przystanek pole numer, ktory jest numerem Przystanku (nie postoju)
     public int ilPostojow = 0;
     public int ilPrzystankow = 0;
-    
+    public static Map mapInstance=null;
     public Map() throws Exception
     {
+    	 if(Map.mapInstance==null){
+         	Map.mapInstance=this;
+         }
         ArrayList<Postoj> _map = new ArrayList<Postoj>();
-        
-        int n = 0;
-        
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        n++;
-        
-        n = 0; //0
+        Parser p=new Parser("tram_lines.osm");
+        for(Node n:p.nodeRegistry.values()){
+        	if(n instanceof Przystanek){
+        		_map.add((Przystanek) n);
+        		((Przystanek) n).setNumer(_map.size()-1);
+        	}
+        }
+        for(Track t:p.trackRegistry.values()){
+        	double distance=0;
+        	Przystanek current=t.getStartNode();
+        	Przystanek next=current;
+        	for(int i=t.startNode;i<=t.stopNode;i++){
+        		
+        		distance=OsmMercator.getDistance(current.lonlat[1], current.lonlat[0], t.nodes.get(i).lonlat[1], t.nodes.get(i).lonlat[0]);
+        		if(t.nodes.get(i) instanceof Przystanek && distance>0){
+        			//dodaj polacznia
+        			//zeruj
+        			next=(Przystanek) t.nodes.get(i);
+        			current.AddOdnoga(next.getNumer(),60,distance);
+        			distance=0;
+        			current=next;
+        		}
+        	}
+        }
+        /*int n = 0; //0
         Przystanek bronowiceMale = new Przystanek(n, "Bronowice Male");
         bronowiceMale.AddOdnoga(n+1, 60, 500); //n=0  // 500m
         _map.add(bronowiceMale);
@@ -191,14 +190,48 @@ public class Map
         //po tym numery Przystankow nie pokrywaja sie z numerami Przystankow
         //od tego momentu tez odleglosci odnog Przystankow sa odleglosciami od najblizszych Postojow (czyli wliczaja w to KamienieMilowe)
         //a nie tak jak wczesniej odleglosci Przystankow od najblizszych Przystankow
+         * 
+         */
         uzupelnijMapeOKamienieMilowe(_map);
         
         map = new Postoj [_map.size()];
-        _map.toArray(map);
+        map=_map.toArray(map);
         
         this.ilPostojow = getIloscPostojow();
         this.ilPrzystankow = getIloscPrzystankow();
+        System.out.println("Nodes:" +p.nodeRegistry.size());
+		System.out.println("Ways:" +p.wayRegistry.size());
+		System.out.println("Tracks:" +p.trackRegistry.size());
+		System.out.println("Stops:" +p.tramStopCounter);
+		for(Track t:p.trackRegistry.values()){
+			System.out.println(t);
+			for(Node n:t.nodes){
+				if(n instanceof Przystanek)
+					System.out.println(n.id+":"+((Przystanek)n).getNazwa());
+			}
+		}
+		System.out.println("Przystanki po konwersji:"+getIloscPrzystankow());
    }
+    
+    public int getNumerPostoju(int _numer_przystanku)
+    {
+        int numer_postoju = -1;
+        int temp_numer_postoju = -1;
+        
+        for(int i=0; i<ilPrzystankow; i++)
+        {
+            if(map[i] instanceof Przystanek)
+            {
+                if(map[i].getNumer() == _numer_przystanku)
+                {
+                    numer_postoju = i;
+                    break;
+                }
+            }
+        }
+        
+        return numer_postoju;
+    }
     
     public Postoj getPostoj(int numer_postoju) //troche zbedna metoda
     {
@@ -214,7 +247,8 @@ public class Map
             if(map[i] instanceof Przystanek)
             {
                 if(current_numer_przystanku == numer_przystanku) 
-                    current_numer_przystanku++;
+                    { szukany = (Przystanek) map[i]; }
+                current_numer_przystanku++;
             }
         }
         
@@ -234,7 +268,7 @@ public class Map
             if(map[i] instanceof Przystanek) count++;
         }
         
-        return 0;
+        return count;
     }
     
     
